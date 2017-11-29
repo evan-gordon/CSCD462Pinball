@@ -9,7 +9,7 @@
 #define NUM_PLAYERS_ROW 13
 Bally bally;
 
-int activePlayer = 0;
+int activePlayer = -1;
 int LMH[3] = {2,8,4} ; // {8,4,12} ; 
 
 void setup() {
@@ -19,7 +19,8 @@ void setup() {
 
 void loop() {
   bool gameStarted = false;
-  int numPlayers = 0, credits = 0;
+  activePlayer = -1;
+  int numPlayers = -1, credits = 0, turn = 0;
   long int scores[4] = {0};
   //init S/W state: scores, player number, ball number, drop target 
   //counters, any other game and/or ball state variables
@@ -27,18 +28,32 @@ void loop() {
   int r = waitPlayers(numPlayers, credits);
     //turn off game over, indicate #players=1, set player1 score to zero
     //loop for each player and ball (3 balls per player per game)
-      //zero the switch memory so don’t retain sticky hits from before
-      //init any S/W and H/W state that should reset on each ball
-      //light current player up and display the ball number
-      //fire the outhole solenoid to eject a ball
-      //loop, reading each playfield switch
-        //for each switch hit, take appropriate action (add player,
-        //fire solenoid, add points, play chime, arm bonus, etc.)
-      //until the outlane switch is read
-      //advance current player and/or ball number
-    //until each player has played 3 balls
-    //check for high score (optional)
-    //perform random score match (optional), fire knocker on match
+      while(turn < 3)
+      {
+        //zero the switch memory so don’t retain sticky hits from before
+        //init any S/W and H/W state that should reset on each ball
+        //light current player up and display the ball number
+        bally.fireSolenoid(6, true);//fire the outhole solenoid to eject a ball
+        while(!bally.getSwitch(0,7))//whle the outlane switch is not pressed
+        {
+          //read each playfield switch
+          //for each switch hit, take appropriate action (add player,
+          //fire solenoid, add points, play chime, arm bonus, etc.)
+        }
+        if(activePlayer < numPlayers)//advance current player and/or ball number
+        {
+          Serial.println("Increment Player");
+          activePlayer++;
+        }
+        else
+        {
+          Serial.println("New Turn");
+          turn++;
+          activePlayer = 0;
+        }//until each player has played 3 balls
+      }
+      //check for high score (optional)
+      //perform random score match (optional), fire knocker on match
 
 }
 
@@ -82,6 +97,7 @@ int waitPlayers(int& numPlayers, int& credits)
     bool result = creditReleased();
     if(result){
       if(credits < 4){//are more than 4 credits allowed?
+        Serial.println("Add Credit");
         credits++;
         bally.setDisplay(10, 3, credits);//this last argument might need to be converted to BCD
       
@@ -90,11 +106,16 @@ int waitPlayers(int& numPlayers, int& credits)
     result = addPlayerReleased();
     if(result){
       if(credits > 0 && numPlayers < 4){
-        switchPlayer(0);//set active player 0
-        lightLamp(NUM_PLAYERS_ROW, numPlayers);
+        Serial.print("Add Player ");
+        Serial.println(numPlayers);
         credits--;
         numPlayers++;
-        bally.fireSolenoid(6, true);//eject ball
+        lightLamp(NUM_PLAYERS_ROW, numPlayers);
+        if(numPlayers == 0)
+        {
+          switchPlayer(0);//set active player 0
+          bally.fireSolenoid(6, true);//eject ball
+        }
       }
     }
   }
@@ -102,6 +123,8 @@ int waitPlayers(int& numPlayers, int& credits)
 
 void lightLamp(int row, int col)
 {
+  Serial.print("Light lamp");
+    Serial.println(col);
   for(int i = 0; i < 4; ++i)
   {
     int a = false;
