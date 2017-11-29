@@ -21,8 +21,6 @@ void loop() {
   bool gameStarted = false;
   int numPlayers = 0, credits = 0;
   long int scores[4] = {0};
-  //int scoreFound = waitPlayers(numPlayers, credits);//accept players until game starts
-  //scores[0] = scoreFound;
   //init S/W state: scores, player number, ball number, drop target 
   //counters, any other game and/or ball state variables
   //init H/W, such as game over lamp
@@ -85,7 +83,8 @@ int waitPlayers(int& numPlayers, int& credits)
     if(result){
       if(credits < 4){//are more than 4 credits allowed?
         credits++;
-        bally.setDisplay(5, 0, (char)credits);//this last argument might need to be converted to BCD
+        bally.setDisplay(10, 3, credits);//this last argument might need to be converted to BCD
+      
       }
     }
     result = addPlayerReleased();
