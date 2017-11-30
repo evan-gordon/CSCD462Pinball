@@ -9,6 +9,7 @@
 #define NUM_PLAYERS_ROW 13
 Bally bally;
 
+long int scores[4] = {12345};
 int activePlayer = -1;
 int LMH[3] = {2,8,4} ; // {8,4,12} ; 
 
@@ -21,19 +22,30 @@ void loop() {
   bool gameStarted = false;
   activePlayer = -1;
   int numPlayers = -1, credits = 0, turn = 0;
-  long int scores[4] = {0};
+  bally.setDisplay(4, 3, 0);
+  bally.setDisplay(4, 0, 0);
+  bally.setDisplay(4, 1, -1);
+  bally.setDisplay(4, 2, -1);
+  bally.setDisplay(4, 4, -1);
+  bally.setDisplay(4, 5, -1);
+  for(int i = 0; i < 4; i++){setScore(i, 0);}
   //init S/W state: scores, player number, ball number, drop target 
   //counters, any other game and/or ball state variables
   //init H/W, such as game over lamp
   int r = waitPlayers(numPlayers, credits);
-    //turn off game over, indicate #players=1, set player1 score to zero
+  for(int i = 0; i < numPlayers; ++i)
+  {
+    setScore(i, scores[i]);
+    bally.setDisplay(4, 0, turn);//set turn/ball
+  }
+    //, set player1 score to zero
     //loop for each player and ball (3 balls per player per game)
       while(turn < 3)
       {
         //zero the switch memory so don’t retain sticky hits from before
         //init any S/W and H/W state that should reset on each ball
         //light current player up and display the ball number
-        bally.fireSolenoid(6, true);//fire the outhole solenoid to eject a ball
+        bally.fireSolenoid(6, false);//fire the outhole solenoid to eject a ball
         while(!bally.getSwitch(0,7))//whle the outlane switch is not pressed
         {
           //read each playfield switch
@@ -44,12 +56,15 @@ void loop() {
         {
           Serial.println("Increment Player");
           activePlayer++;
+          switchPlayer(activePlayer);
         }
         else
         {
           Serial.println("New Turn");
           turn++;
+          bally.setDisplay(4, 0, turn);
           activePlayer = 0;
+          switchPlayer(activePlayer);
         }//until each player has played 3 balls
       }
       //check for high score (optional)
@@ -99,6 +114,7 @@ int waitPlayers(int& numPlayers, int& credits)
       if(credits < 4){//are more than 4 credits allowed?
         Serial.println("Add Credit");
         credits++;
+        bally.setDisplay(4, 3, credits);
         bally.setDisplay(10, 3, credits);//this last argument might need to be converted to BCD
       
       }
@@ -109,12 +125,13 @@ int waitPlayers(int& numPlayers, int& credits)
         Serial.print("Add Player ");
         Serial.println(numPlayers);
         credits--;
+        bally.setDisplay(4, 3, credits);
         numPlayers++;
         lightLamp(NUM_PLAYERS_ROW, numPlayers);
         if(numPlayers == 0)
         {
           switchPlayer(0);//set active player 0
-          bally.fireSolenoid(6, true);//eject ball
+          bally.fireSolenoid(6, false);//eject ball
         }
       }
     }
@@ -140,7 +157,8 @@ void switchPlayer(const int& playerIndex)
   {
     activePlayer = playerIndex;
     Serial.println("TODO switch active player score");
-    //bally.setDisplay( , );//set score display
+    //bally.setDisplay( playerIndex, );//set score display
+    setScore(playerIndex, scores[playerIndex]);
     lightLamp(PLAYER_UP_ROW, activePlayer);//set player number display
   }
 }
@@ -160,10 +178,10 @@ void setScore(int dispNumber, long int score)
       {
         temp = -1;
       }
-      Serial.println("TODO set display code here");
-      //bally.setDisplay( , );
+      bally.setDisplay(dispNumber, i, temp);
     } 
-  //make leading zeros -1?
+  Serial.print("setScore ");
+  Serial.print(score);
 }
 
 int removeSmallestDigit(long int& score)//takes score splits off leading bit from original score
