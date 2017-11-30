@@ -191,6 +191,13 @@ int removeSmallestDigit(long int& score)//takes score splits off leading bit fro
   return result;
 }
 
+void gameOver(int numPlayers)
+{
+  lightLamp(12, 2);//turn on game over light
+  for(int i = 0; i < 4; i++){setScore(i, 0);}//set scores back to 0
+  activePlayer = -1;
+  numPlayers =-1;
+}
 
 
 
