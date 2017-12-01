@@ -61,7 +61,7 @@ void loop() {
       }
       //check for high score (optional)
       //perform random score match (optional), fire knocker on match
-      //ryans gameover func
+      //gameOver(numPlayers);
 }
 
 void readPlayfield()
@@ -113,6 +113,13 @@ void switchPlayer(const int& playerIndex)//switch activePlayer logic
   }
 }
 
+void gameOver(int numPlayers)
+{
+  lightLamp(12, 2);//turn on game over light
+  for(int i = 0; i < 4; i++){setScore(i, 0);}//set scores back to 0
+  activePlayer = -1;
+  numPlayers =-1;
+}
 
 //==================================================finalized functions==========
 void initScreen()
