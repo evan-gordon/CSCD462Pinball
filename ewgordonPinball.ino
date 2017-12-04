@@ -41,8 +41,9 @@ void loop() {
           if(bally.getSwitch(0,7))
           {
             Serial.println("turn over");
-            bally.playSound(12);
+            bally.playSound(37);
             ballLive = false;
+            delay(900);
             break;
           }
         }
@@ -89,8 +90,12 @@ void readPlayfield()
     bally.playSound(12);
     addScore += 10;
   }
-  else if(bally.getRedge(3, 2) && targetRow == 11111111)
+  else if(bally.getRedge(3, 2))
   {
+    Serial.print("Target State: ");
+    Serial.print(targetRow);
+    if(targetRow == 255)
+    {
     bool allDown = true;
     Serial.println("drop target rebound hit, checking bits");
     for(int i = 0; i < 8; ++i)
@@ -105,6 +110,7 @@ void readPlayfield()
       bally.fireSolenoid(7, true, true); 
       targetRow = 0;
       addScore += 100;
+    }
     }
   }
   static int aHit = false;
@@ -288,6 +294,7 @@ void waitPlayers(int& numPlayers, int& credits)
           switchPlayer(0);//set active player 0
           bally.fireSolenoid(6, false);//eject ball
           bally.setContSolenoid(2, false);
+          bally.zeroSwitchMemory();
           delay(20);
         }
         else{updateScore(numPlayers, scores[numPlayers]);}
@@ -342,31 +349,24 @@ void lightLamp(int row, int col)
   }
 }
 
-void updateScore(int dispNumber, int newScore)
+void updateScore(int dispNumber, const long int& newScore)
 {
   Serial.print("setScore ");
   Serial.println(newScore);
   long int scoreCpy = newScore;
   int temp[7] = {0};
-  for(int i = 0; i < N_DIGITS; ++i)
-    {
-      temp[i] = removeSmallestDigit(scoreCpy);
-      /*if(!bitFound)
-      {
-        if(temp != 0){bitFound = true;}
-        else{temp = -1;}
-      }//*/
-      //bally.setDisplay(dispNumber, i, temp);
-    } 
-  bool bitFound = false;
+  for(int i = 0; i < N_DIGITS; ++i){temp[i] = removeSmallestDigit(scoreCpy);} 
   int counter = N_DIGITS - 1;
   while(true)//turn off leading digits
   {
-      if(!bitFound && temp[counter] == 0){temp[counter] = -1;}
-      else{bitFound = true;}
+      if(temp[counter] == 0){temp[counter] = 11;}
+      else{break;}
       counter--;
-      bally.setDisplay(dispNumber, counter, temp[counter]);
-      if(counter < 0){break;}
+      if(counter <= 0){break;}
+  }
+  for(int i = 0; i < N_DIGITS; ++i)
+  {
+    bally.setDisplay(dispNumber, i, temp[i]);
   }
 }
 
